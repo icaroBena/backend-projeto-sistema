@@ -3,6 +3,7 @@ const cors = require("cors");
 
 // Importa as rotas
 const userRoutes = require("./routes/userRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
@@ -12,6 +13,7 @@ app.use(express.json());
 
 // Rotas principais da API
 app.use("/api/users", userRoutes);
+app.use("/api/auth", authRoutes);
 
 // Rota raiz — aparece quando acessa http://localhost:5000/
 app.get("/", (req, res) => {
