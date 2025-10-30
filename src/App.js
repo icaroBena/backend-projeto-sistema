@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const { swaggerSpec, swaggerUi } = require("./config/swagger");
 
 // Importa as rotas
 const userRoutes = require("./routes/userRoutes");
@@ -15,6 +16,12 @@ const app = express();
 // Middlewares
 app.use(cors());
 app.use(express.json());
+
+// Documentação Swagger
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: "WorkMatch API Documentation"
+}));
 
 // Rotas principais da API
 app.use("/api/users", userRoutes);

@@ -1,11 +1,23 @@
 {
   "name": "backend-projeto-sistema",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "src/Server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "start": "node src/Server.js",
+    "dev": "nodemon src/Server.js",
+    "test": "jest --verbose --coverage",
+    "test:watch": "jest --watch",
+    "docs": "swagger-autogen swagger.json"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coverageDirectory": "coverage",
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/Server.js",
+      "!src/config/**"
+    ],
+    "setupFilesAfterEnv": ["./jest.setup.js"]
   },
   "keywords": [],
   "author": "",
@@ -18,9 +30,17 @@
     "express": "^5.1.0",
     "express-validator": "^7.3.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.19.2"
+    "mongoose": "^8.19.2",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.7",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "@types/jest": "^29.5.8",
+    "jest": "^29.7.0",
+    "mongodb-memory-server": "^9.1.1",
+    "nodemon": "^3.1.10",
+    "supertest": "^6.3.3"
   }
 }
