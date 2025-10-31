@@ -1,183 +1,175 @@
-const Documento = require('../models/Documentos');
-const Prestador = require('../models/Prestador');
-const User = require('../models/User');
-const upload = require('../middlewares/upload');
-const verificacaoService = require('../services/verificacaoService');
+// src/controllers/verificacaoController.js
+
+const Verificacao = require('../models/Verificacao');
+const Usuario = require('../models/User');
 const notificacaoService = require('../services/notificacaoService');
+const path = require('path');
+const fs = require('fs');
 
-// @desc    Enviar documento para verificação
+// @desc    Enviar documentos de verificação
 // @route   POST /api/verificacao/documentos
-// @access  Private (Prestador)
-exports.enviarDocumento = async (req, res) => {
+// @access  Private (Usuário autenticado)
+exports.enviarDocumentos = async (req, res) => {
   try {
-    const prestador = await Prestador.findOne({ usuario: req.user.id });
-    if (!prestador) {
-      return res.status(403).json({ message: 'Apenas prestadores podem enviar documentos' });
+    const { files } = req;
+
+    if (!files || !files.identidade || !files.comprovante) {
+      return res.status(400).json({ message: 'Envie os dois arquivos: identidade e comprovante de residência.' });
     }
 
-    const {
-      tipo,
-      numeroDocumento,
-      orgaoEmissor,
-      dataEmissao
-    } = req.body;
-
-    if (!req.file) {
-      return res.status(400).json({ message: 'Nenhum arquivo enviado' });
+    const usuario = await Usuario.findById(req.user.id);
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
     }
 
-    // Verificar se já existe documento do mesmo tipo pendente
-    const documentoExistente = await Documento.findOne({
-      usuario: req.user.id,
-      tipo,
-      status: { $in: ['pendente', 'em_analise'] }
-    });
-
-    if (documentoExistente) {
-      return res.status(400).json({ 
-        message: 'Já existe um documento deste tipo em análise' 
-      });
-    }
-
-    const documento = new Documento({
-      usuario: req.user.id,
-      tipo,
-      arquivo: {
-        nome: req.file.filename,
-        url: `/uploads/${req.file.filename}`,
-        mimetype: req.file.mimetype,
-        tamanho: req.file.size
+    // Cria registro de verificação
+    const verificacao = new Verificacao({
+      usuario: usuario._id,
+      documentos: {
+        identidade: files.identidade[0].path,
+        comprovante: files.comprovante[0].path
       },
-      metadata: {
-        numeroDocumento,
-        orgaoEmissor,
-        dataEmissao: new Date(dataEmissao)
-      }
+      status: 'pendente',
+      dataEnvio: new Date()
     });
 
-    await documento.save();
+    await verificacao.save();
 
-    // Notificar administradores
-    await notificacaoService.notificarAdministradores({
-      tipo: 'novo_documento',
-      titulo: 'Novo documento para verificação',
-      mensagem: `Novo documento ${tipo} enviado por prestador para verificação`,
-      dadosAdicionais: { documentoId: documento._id }
+    // Notificar administradores (ou equipe responsável)
+    await notificacaoService.criarNotificacao({
+      tipo: 'verificacao_nova',
+      titulo: 'Nova verificação pendente',
+      mensagem: `O usuário ${usuario.nome} enviou documentos para verificação.`,
+      dadosAdicionais: { verificacaoId: verificacao._id, usuarioId: usuario._id }
     });
 
-    res.status(201).json(documento);
+    res.status(201).json({
+      message: 'Documentos enviados com sucesso! Aguardando análise.',
+      verificacao
+    });
 
   } catch (error) {
-    console.error('Erro ao enviar documento:', error);
-    res.status(500).json({ message: 'Erro ao enviar documento' });
+    console.error('Erro ao enviar documentos:', error);
+    res.status(500).json({ message: 'Erro ao enviar documentos' });
   }
 };
 
-// @desc    Analisar documento
-// @route   PUT /api/verificacao/documentos/:id
-// @access  Private (Admin)
-exports.analisarDocumento = async (req, res) => {
+// @desc    Buscar documentos de verificação de um usuário
+// @route   GET /api/verificacao/documentos/:userId
+// @access  Private (Admin ou usuário dono)
+exports.buscarDocumentos = async (req, res) => {
   try {
-    const admin = await User.findById(req.user.id);
-    if (!admin || admin.tipo !== 'admin') {
-      return res.status(403).json({ message: 'Apenas administradores podem analisar documentos' });
+    const { userId } = req.params;
+
+    const verificacao = await Verificacao.findOne({ usuario: userId })
+      .populate('usuario', 'nome email');
+
+    if (!verificacao) {
+      return res.status(404).json({ message: 'Nenhum documento encontrado para este usuário.' });
     }
 
-    const documento = await Documento.findById(req.params.id);
-    if (!documento) {
-      return res.status(404).json({ message: 'Documento não encontrado' });
+    // Permitir apenas o próprio usuário ou admin (caso tenha sistema de permissões)
+    if (req.user.id !== userId && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Acesso negado.' });
     }
 
-    const { status, observacoes } = req.body;
+    res.json(verificacao);
+  } catch (error) {
+    console.error('Erro ao buscar documentos:', error);
+    res.status(500).json({ message: 'Erro ao buscar documentos' });
+  }
+};
 
-    documento.status = status;
-    documento.observacoes = observacoes;
-    documento.verificadoPor = req.user.id;
-    documento.dataVerificacao = new Date();
+// @desc    Aprovar documento de verificação
+// @route   PUT /api/verificacao/documentos/:documentoId/aprovar
+// @access  Private (Admin)
+exports.aprovarDocumento = async (req, res) => {
+  try {
+    const { documentoId } = req.params;
 
-    await documento.save();
-
-    // Se todos os documentos necessários foram aprovados, atualizar status do prestador
-    if (status === 'aprovado') {
-      await verificacaoService.verificarStatusPrestador(documento.usuario);
+    const verificacao = await Verificacao.findById(documentoId).populate('usuario', 'nome email');
+    if (!verificacao) {
+      return res.status(404).json({ message: 'Documento não encontrado.' });
     }
+
+    verificacao.status = 'aprovado';
+    verificacao.dataVerificacao = new Date();
+    await verificacao.save();
 
     // Notificar usuário
     await notificacaoService.criarNotificacao({
-      destinatario: documento.usuario,
-      tipo: 'documento_verificado',
-      titulo: 'Documento verificado',
-      mensagem: `Seu documento ${documento.tipo} foi ${status}`,
-      dadosAdicionais: { documentoId: documento._id }
+      destinatario: verificacao.usuario._id,
+      tipo: 'verificacao_aprovada',
+      titulo: 'Verificação aprovada',
+      mensagem: 'Seus documentos foram aprovados com sucesso!',
+      dadosAdicionais: { verificacaoId: verificacao._id }
     });
 
-    res.json(documento);
-
+    res.json({ message: 'Documentos aprovados com sucesso.' });
   } catch (error) {
-    console.error('Erro ao analisar documento:', error);
-    res.status(500).json({ message: 'Erro ao analisar documento' });
+    console.error('Erro ao aprovar documento:', error);
+    res.status(500).json({ message: 'Erro ao aprovar documento' });
   }
 };
 
-// @desc    Listar documentos do usuário
-// @route   GET /api/verificacao/documentos
-// @access  Private
-exports.listarDocumentos = async (req, res) => {
-  try {
-    const documentos = await Documento.find({ usuario: req.user.id })
-      .sort({ dataEnvio: -1 });
-
-    res.json(documentos);
-
-  } catch (error) {
-    console.error('Erro ao listar documentos:', error);
-    res.status(500).json({ message: 'Erro ao listar documentos' });
-  }
-};
-
-// @desc    Listar documentos pendentes
-// @route   GET /api/verificacao/documentos/pendentes
+// @desc    Rejeitar documento de verificação
+// @route   PUT /api/verificacao/documentos/:documentoId/rejeitar
 // @access  Private (Admin)
-exports.listarDocumentosPendentes = async (req, res) => {
+exports.rejeitarDocumento = async (req, res) => {
   try {
-    const admin = await User.findById(req.user.id);
-    if (!admin || admin.tipo !== 'admin') {
-      return res.status(403).json({ message: 'Apenas administradores podem ver documentos pendentes' });
+    const { documentoId } = req.params;
+    const { motivo } = req.body;
+
+    const verificacao = await Verificacao.findById(documentoId).populate('usuario', 'nome email');
+    if (!verificacao) {
+      return res.status(404).json({ message: 'Documento não encontrado.' });
     }
 
-    const documentos = await Documento.find({ 
-      status: { $in: ['pendente', 'em_analise'] } 
-    })
-      .populate('usuario', 'nome email')
-      .sort({ dataEnvio: 1 });
+    verificacao.status = 'rejeitado';
+    verificacao.motivoRejeicao = motivo || 'Motivo não especificado';
+    verificacao.dataVerificacao = new Date();
+    await verificacao.save();
 
-    res.json(documentos);
+    // Notificar usuário
+    await notificacaoService.criarNotificacao({
+      destinatario: verificacao.usuario._id,
+      tipo: 'verificacao_rejeitada',
+      titulo: 'Verificação rejeitada',
+      mensagem: `Seus documentos foram rejeitados. Motivo: ${verificacao.motivoRejeicao}`,
+      dadosAdicionais: { verificacaoId: verificacao._id }
+    });
 
+    res.json({ message: 'Documentos rejeitados com sucesso.' });
   } catch (error) {
-    console.error('Erro ao listar documentos pendentes:', error);
-    res.status(500).json({ message: 'Erro ao listar documentos pendentes' });
+    console.error('Erro ao rejeitar documento:', error);
+    res.status(500).json({ message: 'Erro ao rejeitar documento' });
   }
 };
 
-// @desc    Verificar status de verificação do prestador
-// @route   GET /api/verificacao/status
-// @access  Private (Prestador)
+// @desc    Verificar status de verificação de um usuário
+// @route   GET /api/verificacao/status/:userId
+// @access  Private (Usuário ou admin)
 exports.verificarStatus = async (req, res) => {
   try {
-    const prestador = await Prestador.findOne({ usuario: req.user.id });
-    if (!prestador) {
-      return res.status(403).json({ message: 'Apenas prestadores podem verificar status' });
+    const { userId } = req.params;
+
+    const verificacao = await Verificacao.findOne({ usuario: userId })
+      .select('status motivoRejeicao dataVerificacao');
+
+    if (!verificacao) {
+      return res.status(404).json({ message: 'Nenhum registro de verificação encontrado.' });
     }
 
-    const status = await verificacaoService.obterStatusVerificacao(req.user.id);
+    // Permitir apenas o próprio usuário ou admin
+    if (req.user.id !== userId && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Acesso negado.' });
+    }
 
     res.json({
-      status: status.status,
-      documentosNecessarios: status.documentosNecessarios,
-      documentosAprovados: status.documentosAprovados,
-      documentosPendentes: status.documentosPendentes
+      status: verificacao.status,
+      motivoRejeicao: verificacao.motivoRejeicao,
+      dataVerificacao: verificacao.dataVerificacao
     });
-
   } catch (error) {
     console.error('Erro ao verificar status:', error);
     res.status(500).json({ message: 'Erro ao verificar status' });

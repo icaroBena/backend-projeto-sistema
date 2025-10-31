@@ -1,5 +1,5 @@
 const logger = require('../utils/logger');
-const Documento = require('../models/Documento');
+const Documento = require('../models/Documentos');
 const User = require('../models/User');
 const notificacaoService = require('./notificacaoService');
 const emailService = require('./emailService');

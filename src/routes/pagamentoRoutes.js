@@ -5,44 +5,38 @@ const pagamentoController = require('../controllers/pagamentoController');
 const auth = require('../middlewares/auth');
 const validateInput = require('../middlewares/validateInput');
 
-// Validações para pagamento
+// Validações para iniciar pagamento
 const pagamentoValidation = [
-  check('propostaId').notEmpty().withMessage('ID da proposta é obrigatório'),
-  check('valor').isNumeric().withMessage('Valor deve ser numérico'),
-  check('metodoPagamento').isIn(['credito', 'debito', 'pix']).withMessage('Método de pagamento inválido')
+  check('servicoId').notEmpty().withMessage('ID do serviço é obrigatório'),
+  check('metodoPagamento').notEmpty().withMessage('Método de pagamento é obrigatório')
 ];
 
 // Rotas privadas (todas requerem autenticação)
-router.post('/',
+
+// Iniciar pagamento (escrow)
+router.post('/escrow',
   auth,
   pagamentoValidation,
   validateInput,
-  pagamentoController.criarPagamento
+  pagamentoController.iniciarPagamento
 );
 
-router.get('/cliente/:clienteId',
+// Listar pagamentos (cliente ou prestador via query tipo=cliente|prestador)
+router.get('/',
   auth,
-  pagamentoController.buscarPagamentosCliente
+  pagamentoController.listarPagamentos
 );
 
-router.get('/prestador/:prestadorId',
-  auth,
-  pagamentoController.buscarPagamentosPrestador
-);
-
-router.post('/:id/liberar',
+// Liberar pagamento
+router.put('/:id/liberar',
   auth,
   pagamentoController.liberarPagamento
 );
 
-router.post('/:id/estornar',
+// Solicitar reembolso
+router.post('/:id/reembolso',
   auth,
-  pagamentoController.estornarPagamento
-);
-
-router.get('/:id',
-  auth,
-  pagamentoController.buscarPagamentoPorId
+  pagamentoController.solicitarReembolso
 );
 
 module.exports = router;

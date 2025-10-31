@@ -1,16 +1,22 @@
 const mongoose = require('mongoose');
+require('dotenv').config();
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.DATABASE_URL, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    console.log('🔌 Iniciando conexão com o MongoDB...');
+    console.log('📦 URI recebida:', process.env.MONGO_URI);
 
-    console.log(`MongoDB Conectado: ${conn.connection.host}`);
+    if (!process.env.MONGO_URI) {
+      throw new Error('❌ Variável MONGO_URI não encontrada no .env');
+    }
+
+    const conn = await mongoose.connect(process.env.MONGO_URI);
+
+    console.log(`✅ MongoDB conectado com sucesso: ${conn.connection.host}/${conn.connection.name}`);
+    return conn;
   } catch (error) {
-    console.error(`Erro: ${error.message}`);
-    process.exit(1);
+    console.error('💥 Erro ao conectar ao MongoDB:', error.message);
+    throw error;
   }
 };
 

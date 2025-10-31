@@ -231,3 +231,91 @@ exports.recusarProposta = async (req, res) => {
     res.status(500).json({ message: 'Erro ao recusar proposta' });
   }
 };
+
+// ==============================
+// 🔹 FUNÇÕES ADICIONADAS ABAIXO 🔹
+// ==============================
+
+// Buscar propostas por serviço
+exports.buscarPropostasServico = async (req, res) => {
+  try {
+    const { servicoId } = req.params;
+    const propostas = await Proposta.find({ servico: servicoId })
+      .populate('prestador', 'nome avaliacaoMedia')
+      .sort({ dataEnvio: -1 });
+
+    res.json(propostas);
+  } catch (error) {
+    console.error('Erro ao buscar propostas do serviço:', error);
+    res.status(500).json({ message: 'Erro ao buscar propostas do serviço' });
+  }
+};
+
+// Buscar propostas por prestador
+exports.buscarPropostasPrestador = async (req, res) => {
+  try {
+    const { prestadorId } = req.params;
+    const propostas = await Proposta.find({ prestador: prestadorId })
+      .populate('servico', 'titulo status')
+      .sort({ dataEnvio: -1 });
+
+    res.json(propostas);
+  } catch (error) {
+    console.error('Erro ao buscar propostas do prestador:', error);
+    res.status(500).json({ message: 'Erro ao buscar propostas do prestador' });
+  }
+};
+
+// Buscar propostas por cliente
+exports.buscarPropostasCliente = async (req, res) => {
+  try {
+    const { clienteId } = req.params;
+    const servicos = await Servico.find({ cliente: clienteId }).select('_id');
+    const servicoIds = servicos.map(s => s._id);
+
+    const propostas = await Proposta.find({ servico: { $in: servicoIds } })
+      .populate('prestador', 'nome')
+      .sort({ dataEnvio: -1 });
+
+    res.json(propostas);
+  } catch (error) {
+    console.error('Erro ao buscar propostas do cliente:', error);
+    res.status(500).json({ message: 'Erro ao buscar propostas do cliente' });
+  }
+};
+
+// Cancelar proposta
+exports.cancelarProposta = async (req, res) => {
+  try {
+    const proposta = await Proposta.findById(req.params.id);
+    if (!proposta) {
+      return res.status(404).json({ message: 'Proposta não encontrada' });
+    }
+
+    proposta.status = StatusProposta.CANCELADA;
+    await proposta.save();
+
+    res.json({ message: 'Proposta cancelada com sucesso' });
+  } catch (error) {
+    console.error('Erro ao cancelar proposta:', error);
+    res.status(500).json({ message: 'Erro ao cancelar proposta' });
+  }
+};
+
+// Buscar proposta por ID
+exports.buscarPropostaPorId = async (req, res) => {
+  try {
+    const proposta = await Proposta.findById(req.params.id)
+      .populate('prestador', 'nome')
+      .populate('servico', 'titulo status');
+      
+    if (!proposta) {
+      return res.status(404).json({ message: 'Proposta não encontrada' });
+    }
+
+    res.json(proposta);
+  } catch (error) {
+    console.error('Erro ao buscar proposta por ID:', error);
+    res.status(500).json({ message: 'Erro ao buscar proposta por ID' });
+  }
+};

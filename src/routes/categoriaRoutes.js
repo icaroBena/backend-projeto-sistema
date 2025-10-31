@@ -4,7 +4,7 @@ const { check } = require('express-validator');
 const categoriaController = require('../controllers/categoriaController');
 const auth = require('../middlewares/auth');
 const validateInput = require('../middlewares/validateInput');
-const checkRole = require('../middlewares/checkRole');
+const { checkRole } = require('../middlewares/checkRole');
 
 // Validações para categoria
 const categoriaValidation = [
