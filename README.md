@@ -2,7 +2,7 @@
 
 Backend do sistema WorkMatch - Plataforma de conexão entre prestadores de serviço e clientes.
 
-## 🚀 Tecnologias
+##  Tecnologias
 
 - Node.js
 - Express
@@ -11,13 +11,13 @@ Backend do sistema WorkMatch - Plataforma de conexão entre prestadores de servi
 - Jest
 - Swagger
 
-## 📋 Pré-requisitos
+##  Pré-requisitos
 
 - Node.js 16+
 - MongoDB
 - NPM ou Yarn
 
-## 🔧 Instalação
+##  Instalação
 
 1. Clone o repositório:
 ```bash
@@ -36,7 +36,7 @@ cp .env.example .env
 ```
 Edite o arquivo `.env` com suas configurações
 
-## ⚙️ Configuração
+##  Configuração
 
 O projeto usa as seguintes variáveis de ambiente:
 
@@ -49,7 +49,7 @@ O projeto usa as seguintes variáveis de ambiente:
 - `UPLOAD_DIR`: Diretório para upload de arquivos
 - `FRONTEND_URL`: URL do frontend para CORS
 
-## 🏃‍♂️ Executando
+##  Executando
 
 ### Desenvolvimento
 ```bash
@@ -70,7 +70,7 @@ npm test
 npm run test:coverage
 ```
 
-## 📚 Documentação
+##  Documentação
 
 A documentação da API está disponível em:
 
@@ -117,7 +117,7 @@ http://localhost:3000/api/docs
   - PUT /api/notificacoes/marcar-todas-como-lidas
   - GET /api/notificacoes/nao-lidas
 
-## 📦 Scripts
+##  Scripts
 
 - `npm start`: Inicia em produção
 - `npm run dev`: Inicia em desenvolvimento com hot-reload
@@ -128,7 +128,7 @@ http://localhost:3000/api/docs
 - `npm run seed`: Popula banco com dados iniciais
 - `npm run docs`: Gera documentação Swagger
 
-## 🔐 Segurança
+##  Segurança
 
 - Autenticação via JWT
 - Senhas criptografadas com bcrypt
@@ -138,11 +138,11 @@ http://localhost:3000/api/docs
 - Helmet para headers de segurança
 - CORS configurado
 
-## 📄 Licença
+##  Licença
 
 Este projeto está sob a licença MIT.
 
-## ✨ Contribuição
+##  Contribuição
 
 1. Faça o fork
 2. Crie sua branch (`git checkout -b feature/nova-feature`)
