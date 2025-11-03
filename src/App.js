@@ -33,7 +33,7 @@ app.use("/api/verificacao", verificacaoRoutes);
 app.use("/api/categorias", categoriaRoutes);
 
 // Rota raiz — aparece quando acessa http://localhost:5000/
-app.get("/", (req, res) => {
+app.get("/api", (req, res) => {
   res.json({
     message: "API do WorkMatch rodando com Node.js",
     author: "Alex & Bena",

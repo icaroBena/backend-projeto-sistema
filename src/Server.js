@@ -12,7 +12,7 @@ connectDB()
       console.log(`
 ===========================================
 Servidor rodando com sucesso!
-URL: http://localhost:${PORT}
+URL: http://localhost:${PORT}/api
 Banco de dados: Conectado
 Ambiente: ${process.env.NODE_ENV}
 Pressione CTRL+C para encerrar.
