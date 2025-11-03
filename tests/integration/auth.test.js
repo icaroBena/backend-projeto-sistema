@@ -5,9 +5,9 @@ const tokenService = require('../../src/services/tokenService');
 
 describe('Auth Controller', () => {
   const testUser = {
-    nome: 'Test User',
+    name: 'Test User',
     email: 'test@example.com',
-    senha: 'Test@123456',
+    password: 'Test@123456',
     cpf: '12345678901',
     tipo: 'cliente'
   };
