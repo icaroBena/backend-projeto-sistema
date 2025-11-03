@@ -62,7 +62,7 @@ describe('Auth Controller', () => {
         .post('/api/auth/login')
         .send({
           email: testUser.email,
-          senha: testUser.senha
+          password: testUser.password
         });
 
       expect(res.status).toBe(200);
@@ -75,7 +75,7 @@ describe('Auth Controller', () => {
         .post('/api/auth/login')
         .send({
           email: testUser.email,
-          senha: 'wrongpassword'
+          password: 'wrongpassword'
         });
 
       expect(res.status).toBe(401);
@@ -87,7 +87,7 @@ describe('Auth Controller', () => {
         .post('/api/auth/login')
         .send({
           email: 'nonexistent@example.com',
-          senha: testUser.senha
+          password: testUser.password
         });
 
       expect(res.status).toBe(401);
@@ -160,7 +160,7 @@ describe('Auth Controller', () => {
         .post('/api/auth/reset-password')
         .send({
           token: resetToken,
-          senha: 'NewTest@123'
+          password: 'NewTest@123'
         });
 
       expect(res.status).toBe(200);
@@ -172,7 +172,7 @@ describe('Auth Controller', () => {
         .post('/api/auth/reset-password')
         .send({
           token: 'invalid-token',
-          senha: 'NewTest@123'
+          password: 'NewTest@123'
         });
 
       expect(res.status).toBe(401);

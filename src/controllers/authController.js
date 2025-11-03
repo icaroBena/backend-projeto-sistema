@@ -61,6 +61,7 @@ exports.register = async (req, res) => {
 // ============================
 exports.login = async (req, res) => {
   try {
+    console.log("Iniciando processo de login");
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ success: false, errors: errors.array() });
@@ -71,12 +72,14 @@ exports.login = async (req, res) => {
     // Verificar se o usuário existe
     const user = await User.findOne({ email });
     if (!user) {
+      console.log("Usuário não encontrado durante o login");
       return res.status(401).json({ success: false, message: 'Credenciais inválidas' });
     }
 
     // Verificar senha
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      console.log("Senha inválida durante o login");
       return res.status(401).json({ success: false, message: 'Credenciais inválidas' });
     }
 
