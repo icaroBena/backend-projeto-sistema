@@ -25,26 +25,26 @@ const router = express.Router();
  *           schema:
  *             type: object
  *             required:
- *               - nome
+ *               - name
  *               - email
- *               - senha
+ *               - password
  *               - cpf
  *               - tipo
  *             properties:
- *               nome:
+ *               name:
  *                 type: string
  *                 description: Nome completo do usuário
  *               email:
  *                 type: string
  *                 format: email
  *                 description: Email do usuário
- *               senha:
+ *               password:
  *                 type: string
  *                 format: password
  *                 description: Senha do usuário
  *               cpf:
  *                 type: string
- *                 description: CPF do usuário
+ *                 description: CPF do usuário no formato 000.000.000-00
  *               tipo:
  *                 type: string
  *                 enum: [cliente, prestador]
@@ -62,7 +62,7 @@ const router = express.Router();
  *                   properties:
  *                     id:
  *                       type: string
- *                     nome:
+ *                     name:
  *                       type: string
  *                     email:
  *                       type: string
@@ -72,11 +72,13 @@ const router = express.Router();
  *         description: Dados inválidos ou usuário já existente
  */
 
-// Validações para registro
+// Validações para registro (mantendo o padrão do controller)
 const registerValidation = [
   check('name', 'Nome é obrigatório').not().isEmpty(),
   check('email', 'Por favor, inclua um email válido').isEmail(),
-  check('password', 'Por favor, digite uma senha com 6 ou mais caracteres').isLength({ min: 6 })
+  check('password', 'A senha deve ter 6 ou mais caracteres').isLength({ min: 6 }),
+  check('cpf', 'CPF deve estar no formato 000.000.000-00').optional().matches(/^\d{3}\.\d{3}\.\d{3}\-\d{2}$/),
+  check('tipo', 'Tipo deve ser cliente ou prestador').optional().isIn(['cliente', 'prestador'])
 ];
 
 // Validações para login
@@ -99,12 +101,12 @@ const loginValidation = [
  *             type: object
  *             required:
  *               - email
- *               - senha
+ *               - password
  *             properties:
  *               email:
  *                 type: string
  *                 format: email
- *               senha:
+ *               password:
  *                 type: string
  *                 format: password
  *     responses:
@@ -143,11 +145,11 @@ router.post('/login', loginValidation, authController.login);
  *               properties:
  *                 id:
  *                   type: string
- *                 nome:
+ *                 name:
  *                   type: string
  *                 email:
  *                   type: string
- *                 tipo:
+ *                 role:
  *                   type: string
  *       401:
  *         description: Não autorizado
@@ -163,11 +165,11 @@ router.post('/login', loginValidation, authController.login);
  *           schema:
  *             type: object
  *             properties:
- *               nome:
+ *               name:
  *                 type: string
- *               telefone:
+ *               phone:
  *                 type: string
- *               endereco:
+ *               address:
  *                 type: object
  *                 properties:
  *                   cep:

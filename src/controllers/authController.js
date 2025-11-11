@@ -1,13 +1,6 @@
 const User = require('../models/User');
-const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
-
-// Gerar Token JWT
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRATION
-  });
-};
+const TokenService = require('../services/tokenService'); 
 
 // ============================
 // Registro de novo usuário
@@ -19,7 +12,16 @@ exports.register = async (req, res) => {
       return res.status(400).json({ success: false, errors: errors.array() });
     }
 
-    const { name, email, password } = req.body;
+    const { name, email, password, cpf, tipo } = req.body;
+
+    // Validação adicional para CPF e tipo de usuário
+    if (cpf && !/^\d{3}\.\d{3}\.\d{3}\-\d{2}$/.test(cpf)) {
+      return res.status(400).json({ success: false, message: 'CPF inválido. Use o formato 000.000.000-00.' });
+    }
+
+    if (tipo && !['cliente', 'prestador'].includes(tipo)) {
+      return res.status(400).json({ success: false, message: 'Tipo de usuário inválido. Use cliente ou prestador.' });
+    }
 
     // Verificar se o usuário já existe
     const userExists = await User.findOne({ email });
@@ -31,13 +33,19 @@ exports.register = async (req, res) => {
     const user = new User({
       name,
       email,
-      password
+      password,
+      cpf,
+      role: tipo || 'user'
     });
 
     await user.save();
 
-    // Gerar token
-    const token = generateToken(user._id);
+    // Gerar token JWT via TokenService 
+    const token = TokenService.generateToken({
+      id: user._id,
+      email: user.email,
+      role: user.role
+    });
 
     res.status(201).json({
       success: true,
@@ -61,7 +69,10 @@ exports.register = async (req, res) => {
 // ============================
 exports.login = async (req, res) => {
   try {
-    console.log("Iniciando processo de login");
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Iniciando processo de login");
+    }
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ success: false, errors: errors.array() });
@@ -73,7 +84,7 @@ exports.login = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) {
       console.log("Usuário não encontrado durante o login");
-      return res.status(401).json({ success: false, message: 'Credenciais inválidas' });
+      return res.status(404).json({ success: false, message: 'Usuário não encontrado' });
     }
 
     // Verificar senha
@@ -83,8 +94,12 @@ exports.login = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Credenciais inválidas' });
     }
 
-    // Gerar token
-    const token = generateToken(user._id);
+    // Gerar token JWT via TokenService 
+    const token = TokenService.generateToken({
+      id: user._id,
+      email: user.email,
+      role: user.role
+    });
 
     res.status(200).json({
       success: true,

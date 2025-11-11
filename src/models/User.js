@@ -19,6 +19,17 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 6
   },
+  cpf: {
+  type: String,
+  required: false,
+  unique: true,
+  trim: true
+  },
+  phone: {
+  type: String,
+  required: false,
+  trim: true
+  },
   role: {
     type: String,
     enum: ['user', 'admin'],
