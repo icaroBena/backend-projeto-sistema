@@ -12,7 +12,7 @@ exports.register = async (req, res) => {
       return res.status(400).json({ success: false, errors: errors.array() });
     }
 
-    const { name, email, password, cpf, tipo } = req.body;
+    const { name, email, password, cpf, tipo, phone } = req.body;
 
     // Validação adicional para CPF e tipo de usuário
     if (cpf && !/^\d{3}\.\d{3}\.\d{3}\-\d{2}$/.test(cpf)) {
@@ -29,15 +29,18 @@ exports.register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email já cadastrado' });
     }
 
-    // Criar novo usuário
-    const user = new User({
+    // ✅ Cria o objeto apenas com os campos preenchidos (sem cpf: null)
+    const userData = {
       name,
       email,
       password,
-      cpf,
       role: tipo || 'user'
-    });
+    };
 
+    if (cpf) userData.cpf = cpf;
+    if (phone) userData.phone = phone;
+
+    const user = new User(userData);
     await user.save();
 
     // Gerar token JWT via TokenService 
@@ -60,6 +63,10 @@ exports.register = async (req, res) => {
     });
   } catch (error) {
     console.error("Erro ao registrar:", error);
+    // Se for erro de índice duplicado (CPF já existente)
+    if (error.code === 11000 && error.keyPattern?.cpf) {
+      return res.status(400).json({ success: false, message: 'CPF já cadastrado.' });
+    }
     res.status(500).json({ success: false, message: 'Erro no servidor' });
   }
 };
