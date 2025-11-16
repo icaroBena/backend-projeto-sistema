@@ -2,9 +2,14 @@ const express = require('express');
 const router = express.Router();
 const { check } = require('express-validator');
 const processarPagamentoController = require('../../usecases/processarPagamento/processarPagamentoController');
-const reembolsoController = require('../../usecases/reembolso/reembolsoController');
 const auth = require('../middlewares/auth');
 const validateInput = require('../middlewares/validateInput');
+
+/**
+ * @desc Rotas para o caso de uso: Processar Pagamento
+ * Responsável por inicialização, liberação e consulta de pagamentos em escrow
+ * @access Private
+ */
 
 // Validações para iniciar pagamento
 const pagamentoValidation = [
@@ -16,9 +21,11 @@ const pagamentoValidation = [
 // PROCESSAR PAGAMENTO
 // ============================================
 
-// Rotas privadas (todas requerem autenticação)
-
-// Iniciar pagamento (escrow)
+/**
+ * @desc Iniciar pagamento em escrow
+ * @route POST /api/pagamentos/escrow
+ * @access Private - Cliente
+ */
 router.post('/escrow',
   auth,
   pagamentoValidation,
@@ -26,56 +33,35 @@ router.post('/escrow',
   processarPagamentoController.iniciarPagamento
 );
 
-// Listar pagamentos (cliente ou prestador via query tipo=cliente|prestador)
+/**
+ * @desc Listar pagamentos do usuário
+ * @route GET /api/pagamentos
+ * @access Private
+ * @query tipo - 'cliente' ou 'prestador'
+ */
 router.get('/',
   auth,
   processarPagamentoController.listarPagamentos
 );
 
-// Obter detalhes de um pagamento
+/**
+ * @desc Obter detalhes de um pagamento
+ * @route GET /api/pagamentos/:id
+ * @access Private
+ */
 router.get('/:id',
   auth,
   processarPagamentoController.obterDetalhesPagamento
 );
 
-// Liberar pagamento
+/**
+ * @desc Liberar pagamento em escrow
+ * @route PUT /api/pagamentos/:id/liberar
+ * @access Private - Cliente
+ */
 router.put('/:id/liberar',
   auth,
   processarPagamentoController.liberarPagamento
-);
-
-// ============================================
-// REEMBOLSO
-// ============================================
-
-// Solicitar reembolso
-router.post('/:id/reembolso',
-  auth,
-  reembolsoController.solicitarReembolso
-);
-
-// Listar reembolsos
-router.get('/reembolsos',
-  auth,
-  reembolsoController.listarReembolsos
-);
-
-// Obter reembolsos de um pagamento
-router.get('/reembolsos/pagamento/:pagamentoId',
-  auth,
-  reembolsoController.obterReembolsosPagamento
-);
-
-// Aprovar reembolso (Admin)
-router.put('/reembolsos/:id/aprovar',
-  auth,
-  reembolsoController.aprovarReembolso
-);
-
-// Rejeitar reembolso (Admin)
-router.put('/reembolsos/:id/rejeitar',
-  auth,
-  reembolsoController.rejeitarReembolso
 );
 
 module.exports = router;

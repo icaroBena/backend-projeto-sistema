@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { ReembolsoStatus } = require('../utils/systemEnums');
 
 const reembolsoSchema = new mongoose.Schema({
   pagamento: {
@@ -26,8 +27,8 @@ const reembolsoSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pendente', 'em_analise', 'aprovado', 'rejeitado', 'processando', 'concluido'],
-    default: 'pendente'
+    enum: Object.values(ReembolsoStatus),
+    default: ReembolsoStatus.PENDENTE
   },
   dataSolicitacao: {
     type: Date,

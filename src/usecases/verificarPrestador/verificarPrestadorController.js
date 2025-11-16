@@ -1,15 +1,22 @@
-// src/controllers/verificacaoController.js
+/**
+ * Controller: Verificar Prestador
+ * Caso de Uso: Verificação e aprovação de prestadores
+ */
 
-const Verificacao = require('../models/Verificacao');
-const Usuario = require('../models/User');
-const notificacaoService = require('../services/notificacaoService');
+const Verificacao = require('../../models/Verificacao');
+const Usuario = require('../../models/User');
+const { PrestadorStatus } = require('../../utils/systemEnums');
+const notificacaoService = require('../../services/notificacaoService');
+const VerificarPrestadorService = require('./verificarPrestadorService');
 const path = require('path');
 const fs = require('fs');
 
-// @desc    Enviar documentos de verificação
-// @route   POST /api/verificacao/documentos
-// @access  Private (Usuário autenticado)
-exports.enviarDocumentos = async (req, res) => {
+/**
+ * @desc    Enviar documentos de verificação
+ * @route   POST /api/verificacao/documentos
+ * @access  Private (Usuário autenticado)
+ */
+exports.enviarDocumentosVerificacao = async (req, res) => {
   try {
     const { files } = req;
 
@@ -29,7 +36,7 @@ exports.enviarDocumentos = async (req, res) => {
         identidade: files.identidade[0].path,
         comprovante: files.comprovante[0].path
       },
-      status: 'pendente',
+      status: PrestadorStatus.PENDENTE,
       dataEnvio: new Date()
     });
 
@@ -54,10 +61,12 @@ exports.enviarDocumentos = async (req, res) => {
   }
 };
 
-// @desc    Buscar documentos de verificação de um usuário
-// @route   GET /api/verificacao/documentos/:userId
-// @access  Private (Admin ou usuário dono)
-exports.buscarDocumentos = async (req, res) => {
+/**
+ * @desc    Buscar documentos de verificação de um usuário
+ * @route   GET /api/verificacao/documentos/:userId
+ * @access  Private (Admin ou usuário dono)
+ */
+exports.buscarDocumentosVerificacao = async (req, res) => {
   try {
     const { userId } = req.params;
 
@@ -80,10 +89,12 @@ exports.buscarDocumentos = async (req, res) => {
   }
 };
 
-// @desc    Aprovar documento de verificação
-// @route   PUT /api/verificacao/documentos/:documentoId/aprovar
-// @access  Private (Admin)
-exports.aprovarDocumento = async (req, res) => {
+/**
+ * @desc    Aprovar documento de verificação
+ * @route   PUT /api/verificacao/documentos/:documentoId/aprovar
+ * @access  Private (Admin)
+ */
+exports.aprovarVerificacaoPrestador = async (req, res) => {
   try {
     const { documentoId } = req.params;
 
@@ -92,7 +103,7 @@ exports.aprovarDocumento = async (req, res) => {
       return res.status(404).json({ message: 'Documento não encontrado.' });
     }
 
-    verificacao.status = 'aprovado';
+    verificacao.status = PrestadorStatus.APROVADO;
     verificacao.dataVerificacao = new Date();
     await verificacao.save();
 
@@ -112,10 +123,12 @@ exports.aprovarDocumento = async (req, res) => {
   }
 };
 
-// @desc    Rejeitar documento de verificação
-// @route   PUT /api/verificacao/documentos/:documentoId/rejeitar
-// @access  Private (Admin)
-exports.rejeitarDocumento = async (req, res) => {
+/**
+ * @desc    Rejeitar documento de verificação
+ * @route   PUT /api/verificacao/documentos/:documentoId/rejeitar
+ * @access  Private (Admin)
+ */
+exports.rejeitarVerificacaoPrestador = async (req, res) => {
   try {
     const { documentoId } = req.params;
     const { motivo } = req.body;
@@ -125,7 +138,7 @@ exports.rejeitarDocumento = async (req, res) => {
       return res.status(404).json({ message: 'Documento não encontrado.' });
     }
 
-    verificacao.status = 'rejeitado';
+    verificacao.status = PrestadorStatus.REPROVADO;
     verificacao.motivoRejeicao = motivo || 'Motivo não especificado';
     verificacao.dataVerificacao = new Date();
     await verificacao.save();
@@ -146,10 +159,12 @@ exports.rejeitarDocumento = async (req, res) => {
   }
 };
 
-// @desc    Verificar status de verificação de um usuário
-// @route   GET /api/verificacao/status/:userId
-// @access  Private (Usuário ou admin)
-exports.verificarStatus = async (req, res) => {
+/**
+ * @desc    Verificar status de verificação de um usuário
+ * @route   GET /api/verificacao/status/:userId
+ * @access  Private (Usuário ou admin)
+ */
+exports.verificarStatusPrestador = async (req, res) => {
   try {
     const { userId } = req.params;
 
@@ -173,5 +188,40 @@ exports.verificarStatus = async (req, res) => {
   } catch (error) {
     console.error('Erro ao verificar status:', error);
     res.status(500).json({ message: 'Erro ao verificar status' });
+  }
+};
+
+/**
+ * @desc    Listar todas as verificações (Admin)
+ * @route   GET /api/verificacao
+ * @access  Private (Admin)
+ */
+exports.listarVerificacoes = async (req, res) => {
+  try {
+    const { status, page = 1, limit = 10 } = req.query;
+    const query = {};
+
+    if (status) {
+      query.status = status;
+    }
+
+    const verificacoes = await Verificacao.find(query)
+      .populate('usuario', 'nome email')
+      .sort({ dataEnvio: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    const total = await Verificacao.countDocuments(query);
+
+    res.json({
+      verificacoes,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      totalItems: total
+    });
+
+  } catch (error) {
+    console.error('Erro ao listar verificações:', error);
+    res.status(500).json({ message: 'Erro ao listar verificações' });
   }
 };

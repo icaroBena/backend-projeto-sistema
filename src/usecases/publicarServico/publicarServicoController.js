@@ -1,14 +1,21 @@
-const Servico = require('../models/Servico');
-const Cliente = require('../models/Cliente');
-const Prestador = require('../models/Prestador');
-const Categoria = require('../models/Categoria');
-const { StatusServico } = require('../utils/enums');
-const notificacaoService = require('../services/notificacaoService');
+/**
+ * Controller: Publicar Serviço
+ * Caso de Uso: Cliente cria e publica um novo serviço
+ */
 
-// @desc    Criar novo serviço
-// @route   POST /api/servicos
-// @access  Private (Cliente)
-exports.criarServico = async (req, res) => {
+const Servico = require('../../models/Servico');
+const Cliente = require('../../models/Cliente');
+const Prestador = require('../../models/Prestador');
+const Categoria = require('../../models/Categoria');
+const { ServicoStatus } = require('../../utils/systemEnums');
+const notificacaoService = require('../../services/notificacaoService');
+
+/**
+ * @desc    Criar novo serviço (publicar)
+ * @route   POST /api/servicos
+ * @access  Private (Cliente)
+ */
+exports.publicarServico = async (req, res) => {
   try {
     const cliente = await Cliente.findOne({ usuario: req.user.id });
     if (!cliente) {
@@ -35,7 +42,8 @@ exports.criarServico = async (req, res) => {
       categoria: categoriaId,
       cliente: cliente._id,
       orcamentoEstimado,
-      localServico
+      localServico,
+      status: ServicoStatus.PENDENTE
     });
 
     await servico.save();
@@ -60,9 +68,11 @@ exports.criarServico = async (req, res) => {
   }
 };
 
-// @desc    Buscar serviços
-// @route   GET /api/servicos
-// @access  Public
+/**
+ * @desc    Buscar serviços (com filtros)
+ * @route   GET /api/servicos
+ * @access  Public
+ */
 exports.buscarServicos = async (req, res) => {
   try {
     const {
@@ -117,9 +127,11 @@ exports.buscarServicos = async (req, res) => {
   }
 };
 
-// @desc    Buscar serviço por ID
-// @route   GET /api/servicos/:id
-// @access  Private
+/**
+ * @desc    Buscar serviço por ID
+ * @route   GET /api/servicos/:id
+ * @access  Public
+ */
 exports.buscarServicoPorId = async (req, res) => {
   try {
     const servico = await Servico.findById(req.params.id)
@@ -140,9 +152,11 @@ exports.buscarServicoPorId = async (req, res) => {
   }
 };
 
-// @desc    Atualizar serviço
-// @route   PUT /api/servicos/:id
-// @access  Private (Cliente dono do serviço)
+/**
+ * @desc    Atualizar serviço
+ * @route   PUT /api/servicos/:id
+ * @access  Private (Cliente dono do serviço)
+ */
 exports.atualizarServico = async (req, res) => {
   try {
     const servico = await Servico.findById(req.params.id);
@@ -156,8 +170,8 @@ exports.atualizarServico = async (req, res) => {
       return res.status(403).json({ message: 'Não autorizado' });
     }
 
-    // Verificar se o serviço pode ser atualizado
-    if (servico.status !== StatusServico.ABERTO) {
+    // Verificar se o serviço pode ser atualizado (apenas em PENDENTE)
+    if (servico.status !== ServicoStatus.PENDENTE) {
       return res.status(400).json({ 
         message: 'Não é possível atualizar um serviço que já está em andamento ou concluído' 
       });
@@ -191,64 +205,5 @@ exports.atualizarServico = async (req, res) => {
   } catch (error) {
     console.error('Erro ao atualizar serviço:', error);
     res.status(500).json({ message: 'Erro ao atualizar serviço' });
-  }
-};
-
-// @desc    Cancelar serviço
-// @route   PUT /api/servicos/:id/cancelar
-// @access  Private (Cliente dono ou Prestador contratado)
-exports.cancelarServico = async (req, res) => {
-  try {
-    const servico = await Servico.findById(req.params.id);
-    if (!servico) {
-      return res.status(404).json({ message: 'Serviço não encontrado' });
-    }
-
-    // Verificar autorização
-    const cliente = await Cliente.findOne({ usuario: req.user.id });
-    const prestador = await Prestador.findOne({ usuario: req.user.id });
-
-    const isCliente = cliente && servico.cliente.toString() === cliente._id.toString();
-    const isPrestador = prestador && servico.prestador && 
-                       servico.prestador.toString() === prestador._id.toString();
-
-    if (!isCliente && !isPrestador) {
-      return res.status(403).json({ message: 'Não autorizado' });
-    }
-
-    // Verificar se o serviço pode ser cancelado
-    if (![StatusServico.ABERTO, StatusServico.EM_NEGOCIACAO].includes(servico.status)) {
-      return res.status(400).json({ 
-        message: 'Não é possível cancelar um serviço que já está em andamento ou concluído' 
-      });
-    }
-
-    servico.status = StatusServico.CANCELADO;
-    await servico.save();
-
-    // Notificar as partes envolvidas
-    if (isCliente && servico.prestador) {
-      await notificacaoService.criarNotificacao({
-        destinatario: servico.prestador,
-        tipo: 'servico_cancelado',
-        titulo: 'Serviço cancelado pelo cliente',
-        mensagem: `O serviço "${servico.titulo}" foi cancelado pelo cliente`,
-        dadosAdicionais: { servicoId: servico._id }
-      });
-    } else if (isPrestador) {
-      await notificacaoService.criarNotificacao({
-        destinatario: servico.cliente,
-        tipo: 'servico_cancelado',
-        titulo: 'Serviço cancelado pelo prestador',
-        mensagem: `O serviço "${servico.titulo}" foi cancelado pelo prestador`,
-        dadosAdicionais: { servicoId: servico._id }
-      });
-    }
-
-    res.json({ message: 'Serviço cancelado com sucesso' });
-
-  } catch (error) {
-    console.error('Erro ao cancelar serviço:', error);
-    res.status(500).json({ message: 'Erro ao cancelar serviço' });
   }
 };

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { DocumentosStatus } = require('../utils/systemEnums');
 
 const documentoSchema = new mongoose.Schema({
   usuario: {
@@ -19,8 +20,8 @@ const documentoSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pendente', 'em_analise', 'aprovado', 'rejeitado'],
-    default: 'pendente'
+    enum: Object.values(DocumentosStatus),
+    default: DocumentosStatus.PENDENTE
   },
   dataEnvio: {
     type: Date,

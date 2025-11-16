@@ -2,10 +2,14 @@ const express = require('express');
 const router = express.Router();
 const { check } = require('express-validator');
 const receberPropostaController = require('../../usecases/receberProposta/receberPropostaController');
-const confirmarPropostaController = require('../../usecases/confirmarProposta/confirmarPropostaController');
-const negociarPropostaController = require('../../usecases/negociarProposta/negociarPropostaController');
 const auth = require('../middlewares/auth');
 const validateInput = require('../middlewares/validateInput');
+
+/**
+ * @desc Rotas para o caso de uso: Receber Proposta
+ * Responsável por criação de propostas e busca
+ * @access Private
+ */
 
 // Validações para criação de proposta
 const propostaValidation = [
@@ -18,67 +22,57 @@ const propostaValidation = [
 // ============================================
 // RECEBER PROPOSTA - Prestador cria proposta
 // ============================================
+
+/**
+ * @desc Criar uma nova proposta
+ * @route POST /api/propostas
+ * @access Private - Prestador
+ */
 router.post('/',
   auth,
   propostaValidation,
   validateInput,
-  receberPropostaController.receberPropostaServico
+  receberPropostaController.receberProposta
 );
 
+/**
+ * @desc Buscar propostas de um serviço
+ * @route GET /api/propostas/servico/:servicoId
+ * @access Private
+ */
 router.get('/servico/:servicoId',
   auth,
-  receberPropostaController.buscarPropostasServico
+  receberPropostaController.buscarPropostasPorServico
 );
 
+/**
+ * @desc Buscar propostas de um prestador
+ * @route GET /api/propostas/prestador/:prestadorId
+ * @access Private
+ */
 router.get('/prestador/:prestadorId',
   auth,
   receberPropostaController.buscarPropostasPrestador
 );
 
+/**
+ * @desc Buscar propostas de um cliente
+ * @route GET /api/propostas/cliente/:clienteId
+ * @access Private - Cliente
+ */
 router.get('/cliente/:clienteId',
   auth,
   receberPropostaController.buscarPropostasCliente
 );
 
+/**
+ * @desc Obter detalhes de uma proposta
+ * @route GET /api/propostas/:id
+ * @access Private
+ */
 router.get('/:id',
   auth,
   receberPropostaController.buscarPropostaPorId
-);
-
-// ============================================
-// CONFIRMAR PROPOSTA - Cliente aceita/recusa
-// ============================================
-router.put('/:id/aceitar',
-  auth,
-  confirmarPropostaController.aceitarProposta
-);
-
-router.put('/:id/recusar',
-  auth,
-  confirmarPropostaController.recusarProposta
-);
-
-router.put('/:id/cancelar',
-  auth,
-  confirmarPropostaController.cancelarProposta
-);
-
-// ============================================
-// NEGOCIAR PROPOSTA
-// ============================================
-router.put('/:id/renegociar',
-  auth,
-  negociarPropostaController.renegociarProposta
-);
-
-router.put('/:id/finalizarNegociacao',
-  auth,
-  negociarPropostaController.finalizarNegociacao
-);
-
-router.get('/negociacao',
-  auth,
-  negociarPropostaController.listarPropostasEmNegociacao
 );
 
 module.exports = router;
