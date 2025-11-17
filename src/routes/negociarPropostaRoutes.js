@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { check } = require('express-validator');
-const negociarPropostaController = require('../../usecases/negociarProposta/negociarPropostaController');
+const negociarPropostaController = require('../usecases/negociarProposta/negociarPropostaController');
 const auth = require('../middlewares/auth');
 const validateInput = require('../middlewares/validateInput');
 

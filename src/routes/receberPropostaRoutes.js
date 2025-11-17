@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { check } = require('express-validator');
-const receberPropostaController = require('../../usecases/receberProposta/receberPropostaController');
+const receberPropostaController = require('../usecases/receberProposta/receberPropostaController');
 const auth = require('../middlewares/auth');
 const validateInput = require('../middlewares/validateInput');
 

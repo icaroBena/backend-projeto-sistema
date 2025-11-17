@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { check } = require('express-validator');
-const confirmarPropostaController = require('../../usecases/confirmarProposta/confirmarPropostaController');
+const confirmarPropostaController = require('../usecases/confirmarProposta/confirmarPropostaController');
 const auth = require('../middlewares/auth');
 const validateInput = require('../middlewares/validateInput');
 

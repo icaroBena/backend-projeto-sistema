@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { check } = require('express-validator');
-const recuperarSenhaController = require('../../usecases/recuperarSenha/recuperarSenhaController');
+const recuperarSenhaController = require('../usecases/recuperarSenha/recuperarSenhaController');
 const validateInput = require('../middlewares/validateInput');
 
 // Validações

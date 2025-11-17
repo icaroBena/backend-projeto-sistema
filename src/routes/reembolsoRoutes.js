@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { check } = require('express-validator');
-const reembolsoController = require('../../usecases/reembolso/reembolsoController');
+const reembolsoController = require('../usecases/reembolso/reembolsoController');
 const auth = require('../middlewares/auth');
 const validateInput = require('../middlewares/validateInput');
 
