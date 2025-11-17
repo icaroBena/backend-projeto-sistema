@@ -2,6 +2,7 @@ const Avaliacao = require('../models/Avaliacao');
 const Servico = require('../models/Servico');
 const User = require('../models/User');
 const { successResponse, errorResponse } = require('../utils/responseFormatter');
+const { ServicoStatus } = require('../utils/systemEnums');
 
 class AvaliacaoController {
   async criar(req, res) {
@@ -14,7 +15,7 @@ class AvaliacaoController {
       if (!servico) {
         return errorResponse(res, 404, 'Serviço não encontrado');
       }
-      if (servico.status !== 'concluido') {
+      if (servico.status !== ServicoStatus.CONCLUÍDO) {
         return errorResponse(res, 400, 'Só é possível avaliar serviços concluídos');
       }
 

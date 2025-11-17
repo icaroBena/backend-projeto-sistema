@@ -8,7 +8,7 @@ const Servico = require('../../models/Servico');
 const Proposta = require('../../models/Proposta');
 const Cliente = require('../../models/Cliente');
 const Prestador = require('../../models/Prestador');
-const { ServicoStatus, PagamentoStatus } = require('../../utils/systemEnums');
+const { ServicoStatus, PagamentoStatus, PropostaStatus } = require('../../utils/systemEnums');
 const processarPagamentoService = require('./processarPagamentoService');
 const notificacaoService = require('../../services/notificacaoService');
 
@@ -34,7 +34,7 @@ exports.iniciarPagamento = async (req, res) => {
       .populate('prestador')
       .populate({
         path: 'propostas',
-        match: { status: 'ACEITA' }
+        match: { status: PropostaStatus.ACEITA }
       });
 
     if (!servico) {

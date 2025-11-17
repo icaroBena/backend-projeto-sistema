@@ -3,6 +3,7 @@ const Documento = require('../../models/Documentos');
 const User = require('../../models/User');
 const notificacaoService = require('../../services/notificacaoService');
 const emailService = require('../../services/emailService');
+const { PrestadorStatus, DocumentosStatus } = require('../../utils/systemEnums');
 
 /**
  * Serviço para gerenciar verificação de prestadores
@@ -42,22 +43,22 @@ class VerificarPrestadorService {
   static determinarStatusGeral(documentos) {
     try {
       if (!documentos || documentos.length === 0) {
-        return 'pendente';
+        return PrestadorStatus.PENDENTE;
       }
 
       // Verificar se todos foram avaliados
       const todosAvaliados = documentos.every(doc => 
-        ['aprovado', 'reprovado'].includes(doc.status)
+        [DocumentosStatus.APROVADO, DocumentosStatus.REJEITADO].includes(doc.status)
       );
 
       if (!todosAvaliados) {
-        return 'pendente';
+        return PrestadorStatus.PENDENTE;
       }
 
       // Se todos foram aprovados
-      const todosAprovados = documentos.every(doc => doc.status === 'aprovado');
+      const todosAprovados = documentos.every(doc => doc.status === DocumentosStatus.APROVADO);
 
-      return todosAprovados ? 'aprovado' : 'reprovado';
+      return todosAprovados ? PrestadorStatus.APROVADO : PrestadorStatus.REPROVADO;
     } catch (error) {
       logger.error('Erro ao determinar status geral', {
         error: error.message
@@ -78,7 +79,7 @@ class VerificarPrestadorService {
       }
 
       return documentos.every(doc => 
-        ['aprovado', 'reprovado'].includes(doc.status)
+        [DocumentosStatus.APROVADO, DocumentosStatus.REJEITADO].includes(doc.status)
       );
     } catch (error) {
       logger.error('Erro ao verificar se todos foram avaliados', {
@@ -97,7 +98,7 @@ class VerificarPrestadorService {
   static formatarStatusVerificacao(user, documentos) {
     try {
       return {
-        geral: user.statusVerificacao || 'pendente',
+        geral: user.statusVerificacao || PrestadorStatus.PENDENTE,
         documentos: documentos.map(doc => ({
           tipo: doc.tipo,
           status: doc.status,
