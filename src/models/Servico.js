@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { ServicoStatus, TipoLocal } = require('../utils/systemEnums');
 
 const servicoSchema = new mongoose.Schema({
   titulo: {
@@ -25,8 +26,8 @@ const servicoSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['aberto', 'em_negociacao', 'confirmado', 'em_andamento', 'concluido', 'cancelado'],
-    default: 'aberto'
+    enum: Object.values(ServicoStatus),
+    default: ServicoStatus.PENDENTE
   },
   orcamentoEstimado: {
     min: Number,
@@ -37,10 +38,11 @@ const servicoSchema = new mongoose.Schema({
     default: Date.now
   },
   dataConclusao: Date,
+  dataAprovacao: Date,
   localServico: {
     tipo: {
       type: String,
-      enum: ['presencial', 'remoto', 'hibrido'],
+      enum: Object.values(TipoLocal),
       required: true
     },
     endereco: {

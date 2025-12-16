@@ -5,6 +5,7 @@ const Pagamento = require('../models/Pagamento');
 const Verificacao = require('../models/Verificacao');
 const GatewayDePagamento = require('../models/GatewayDePagamento');
 const { successResponse, errorResponse } = require('../utils/responseFormatter');
+const { ServicoStatus, PropostaStatus, PagamentoStatus, PrestadorStatus } = require('../utils/systemEnums');
 
 class AdminController {
   // Usuários
@@ -76,23 +77,23 @@ class AdminController {
         },
         servicos: {
           total: await Servico.countDocuments(),
-          abertos: await Servico.countDocuments({ status: 'aberto' }),
-          emAndamento: await Servico.countDocuments({ status: 'em_andamento' }),
-          concluidos: await Servico.countDocuments({ status: 'concluido' })
+          abertos: await Servico.countDocuments({ status: ServicoStatus.PENDENTE }),
+          emAndamento: await Servico.countDocuments({ status: ServicoStatus.EXECUÇÃO }),
+          concluidos: await Servico.countDocuments({ status: ServicoStatus.CONCLUÍDO })
         },
         propostas: {
           total: await Proposta.countDocuments(),
-          aceitas: await Proposta.countDocuments({ status: 'aceita' }),
-          pendentes: await Proposta.countDocuments({ status: 'pendente' })
+          aceitas: await Proposta.countDocuments({ status: PropostaStatus.ACEITA }),
+          pendentes: await Proposta.countDocuments({ status: PropostaStatus.PENDENTE })
         },
         pagamentos: {
           total: await Pagamento.countDocuments(),
-          aprovados: await Pagamento.countDocuments({ status: 'aprovado' }),
-          pendentes: await Pagamento.countDocuments({ status: 'pendente' }),
+          aprovados: await Pagamento.countDocuments({ status: PagamentoStatus.APROVADO }),
+          pendentes: await Pagamento.countDocuments({ status: PagamentoStatus.PENDENTE }),
           mesAtual: await Pagamento.aggregate([
             {
               $match: {
-                status: 'aprovado',
+                status: PagamentoStatus.APROVADO,
                 dataPagamento: { $gte: inicioMes }
               }
             },
@@ -105,9 +106,9 @@ class AdminController {
           ]).then(result => result[0]?.total || 0)
         },
         verificacoes: {
-          pendentes: await Verificacao.countDocuments({ status: 'pendente' }),
-          aprovadas: await Verificacao.countDocuments({ status: 'aprovada' }),
-          rejeitadas: await Verificacao.countDocuments({ status: 'rejeitada' })
+          pendentes: await Verificacao.countDocuments({ status: PrestadorStatus.PENDENTE }),
+          aprovadas: await Verificacao.countDocuments({ status: PrestadorStatus.APROVADO }),
+          rejeitadas: await Verificacao.countDocuments({ status: PrestadorStatus.REPROVADO })
         }
       };
 
@@ -150,7 +151,7 @@ class AdminController {
       const { dataInicio, dataFim } = req.query;
       
       const query = {
-        status: 'aprovado'
+        status: PagamentoStatus.APROVADO
       };
 
       if (dataInicio && dataFim) {

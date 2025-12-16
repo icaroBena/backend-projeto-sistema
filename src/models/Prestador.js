@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { DiaSemana, PrestadorStatus } = require('../utils/systemEnums');
 
 const prestadorSchema = new mongoose.Schema({
   usuario: {
@@ -43,7 +44,7 @@ const prestadorSchema = new mongoose.Schema({
   disponibilidade: {
     diasSemana: [{
       type: String,
-      enum: ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado']
+      enum: Object.values(DiaSemana)
     }],
     horarios: {
       inicio: String,
@@ -52,8 +53,8 @@ const prestadorSchema = new mongoose.Schema({
   },
   statusVerificacao: {
     type: String,
-    enum: ['pendente', 'em_analise', 'aprovado', 'reprovado'],
-    default: 'pendente'
+    enum: Object.values(PrestadorStatus),
+    default: PrestadorStatus.PENDENTE
   }
 });
 

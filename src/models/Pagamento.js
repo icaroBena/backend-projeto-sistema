@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { PagamentoStatus, MetodoPagamento } = require('../utils/systemEnums');
 
 const pagamentoSchema = new mongoose.Schema({
   servico: {
@@ -22,13 +23,13 @@ const pagamentoSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pendente', 'processando', 'concluido', 'falhou', 'reembolsado'],
-    default: 'pendente'
+    enum: Object.values(PagamentoStatus),
+    default: PagamentoStatus.PENDENTE
   },
   metodoPagamento: {
     tipo: {
       type: String,
-      enum: ['cartao', 'pix', 'boleto'],
+      enum: Object.values(MetodoPagamento),
       required: true
     },
     detalhes: {

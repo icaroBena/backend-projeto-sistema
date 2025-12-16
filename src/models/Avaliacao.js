@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { AvaliacaoStatus } = require('../utils/systemEnums');
 
 const avaliacaoSchema = new mongoose.Schema({
   servico: {
@@ -54,8 +55,8 @@ const avaliacaoSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pendente', 'publicada', 'removida'],
-    default: 'pendente'
+    enum: Object.values(AvaliacaoStatus),
+    default: AvaliacaoStatus.PENDENTE
   },
   respostaPrestador: {
     comentario: String,

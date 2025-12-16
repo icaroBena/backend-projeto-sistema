@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { PropostaStatus } = require('../utils/systemEnums');
 
 const propostaSchema = new mongoose.Schema({
   servico: {
@@ -16,7 +17,7 @@ const propostaSchema = new mongoose.Schema({
     required: true
   },
   prazoEstimado: {
-    type: Number, // em dias
+    type: Number,
     required: true
   },
   descricao: {
@@ -25,8 +26,8 @@ const propostaSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pendente', 'aceita', 'recusada', 'cancelada'],
-    default: 'pendente'
+    enum: Object.values(PropostaStatus),
+    default: PropostaStatus.PENDENTE
   },
   dataEnvio: {
     type: Date,
@@ -40,7 +41,14 @@ const propostaSchema = new mongoose.Schema({
     required: true
   },
   garantia: String,
-  observacoes: String
+  observacoes: String,
+  // Campos para negociação
+  emNegociacao: {
+    type: Boolean,
+    default: false
+  },
+  dataUltimaNegociacao: Date,
+  observacoesNegociacao: String
 });
 
 const Proposta = mongoose.model('Proposta', propostaSchema);
